@@ -1,44 +1,53 @@
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
 using Newtonsoft.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Utf8Json;
 
-namespace JsonPerformanceComparison;
+namespace JsonApiCmp;
 
 [MemoryDiagnoser]
 [SimpleJob(BenchmarkDotNet.Jobs.RuntimeMoniker.Net90)]
-public class JsonBenchmarks
+public class JsonApiBenchmarks
 {
     private readonly List<Person> _testData;
     private readonly string _jsonString;
-    private readonly byte[] _jsonBytes;
+    private readonly string _singleJsonString;
     private readonly JsonSerializerOptions _systemTextJsonOptions;
     private readonly JsonSerializerSettings _newtonsoftSettings;
 
-    public JsonBenchmarks()
+    public JsonApiBenchmarks()
     {
         // 生成测试数据
-        _testData = GenerateTestData(20);
+        _testData = GenerateTestData(10);
         
-        // 预序列化一次以生成 JSON 字符串
-        _jsonString = System.Text.Json.JsonSerializer.Serialize(_testData);
-        
-        // 预序列化一次以生成 JSON 字节数组（用于 Utf8Json）
-        _jsonBytes = Utf8Json.JsonSerializer.Serialize(_testData);
+        // 预序列化一次以生成 JSON 字符串（使用 System.Text.Json）
+        var options = GetSystemTextJsonOptions();
+        _jsonString = System.Text.Json.JsonSerializer.Serialize(_testData, options);
+        _singleJsonString = System.Text.Json.JsonSerializer.Serialize(_testData[0], options);
         
         // System.Text.Json 配置
-        _systemTextJsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false
-        };
+        _systemTextJsonOptions = options;
         
         // Newtonsoft.Json 配置
-        _newtonsoftSettings = new JsonSerializerSettings
+        _newtonsoftSettings = GetNewtonsoftSettings();
+    }
+
+    private JsonSerializerOptions GetSystemTextJsonOptions()
+    {
+        return new JsonSerializerOptions
         {
-            Formatting = Formatting.None
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = false,
+            DefaultIgnoreCondition = JsonIgnoreCondition.Never
+        };
+    }
+
+    private JsonSerializerSettings GetNewtonsoftSettings()
+    {
+        return new JsonSerializerSettings
+        {
+            Formatting = Formatting.None,
+            NullValueHandling = NullValueHandling.Include
         };
     }
 
@@ -76,6 +85,8 @@ public class JsonBenchmarks
         return data;
     }
 
+    // ========== 序列化基准测试 ==========
+    
     [Benchmark(Baseline = true)]
     public string SystemTextJson_Serialize()
     {
@@ -88,12 +99,8 @@ public class JsonBenchmarks
         return JsonConvert.SerializeObject(_testData, _newtonsoftSettings);
     }
 
-    [Benchmark]
-    public byte[] Utf8Json_Serialize()
-    {
-        return Utf8Json.JsonSerializer.Serialize(_testData);
-    }
-
+    // ========== 反序列化基准测试 ==========
+    
     [Benchmark]
     public List<Person> SystemTextJson_Deserialize()
     {
@@ -106,10 +113,31 @@ public class JsonBenchmarks
         return JsonConvert.DeserializeObject<List<Person>>(_jsonString, _newtonsoftSettings)!;
     }
 
+    // ========== 单个对象序列化 ==========
+    
     [Benchmark]
-    public List<Person> Utf8Json_Deserialize()
+    public string SystemTextJson_SerializeSingle()
     {
-        return Utf8Json.JsonSerializer.Deserialize<List<Person>>(_jsonBytes);
+        return System.Text.Json.JsonSerializer.Serialize(_testData[0], _systemTextJsonOptions);
+    }
+
+    [Benchmark]
+    public string NewtonsoftJson_SerializeSingle()
+    {
+        return JsonConvert.SerializeObject(_testData[0], _newtonsoftSettings);
+    }
+
+    // ========== 单个对象反序列化 ==========
+
+    [Benchmark]
+    public Person SystemTextJson_DeserializeSingle()
+    {
+        return System.Text.Json.JsonSerializer.Deserialize<Person>(_singleJsonString, _systemTextJsonOptions)!;
+    }
+
+    [Benchmark]
+    public Person NewtonsoftJson_DeserializeSingle()
+    {
+        return JsonConvert.DeserializeObject<Person>(_singleJsonString, _newtonsoftSettings)!;
     }
 }
-
