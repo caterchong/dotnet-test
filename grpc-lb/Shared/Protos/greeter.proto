@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option csharp_namespace = "GrpcLoadBalancing.Shared";
+
+package greet;
+
+// 定义服务
+service Greeter {
+  // 简单 RPC - 返回服务器信息用于识别哪个实例处理了请求
+  rpc SayHello (HelloRequest) returns (HelloReply);
+  
+  // 健康检查
+  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckReply);
+}
+
+// 请求消息
+message HelloRequest {
+  string name = 1;
+  int32 id = 2;
+}
+
+// 响应消息 - 包含服务器端口信息
+message HelloReply {
+  string message = 1;
+  int32 id = 2;
+  int32 server_port = 3;  // 服务器端口，用于识别哪个实例
+  string server_host = 4; // 服务器主机名
+  int64 timestamp = 5;
+}
+
+// 健康检查请求
+message HealthCheckRequest {
+}
+
+// 健康检查响应
+message HealthCheckReply {
+  bool healthy = 1;
+  int32 server_port = 2;
+}
