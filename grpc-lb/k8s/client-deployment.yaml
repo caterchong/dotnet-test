@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc-client
+  namespace: default
+  labels:
+    app: grpc-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grpc-client
+  template:
+    metadata:
+      labels:
+        app: grpc-client
+    spec:
+      containers:
+      - name: grpc-client
+        image: grpc-client:latest
+        imagePullPolicy: Never  # 对于 kind 使用本地镜像
+        env:
+        # 使用 DNS resolver 连接到 headless service
+        # DNS 格式: dns:///service-name.namespace.svc.cluster.local:port
+        - name: TARGET
+          value: "dns:///grpc-server.default.svc.cluster.local:50051"
+        - name: TEST_DURATION
+          value: "300"  # 5 分钟
+        - name: REQUEST_INTERVAL
+          value: "1000"  # 1 秒
+        command: ["dotnet", "GrpcClient.dll"]
+        args:
+        - "$(TARGET)"
+        - "$(TEST_DURATION)"
+        - "$(REQUEST_INTERVAL)"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
