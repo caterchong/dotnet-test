@@ -14,6 +14,7 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(port, listenOptions =>
     {
+        // 只支持 HTTP/2（gRPC 要求）
         listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2;
     });
 });

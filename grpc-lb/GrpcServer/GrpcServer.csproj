@@ -14,6 +14,11 @@
     </PackageReference>
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- 强制使用 x64 架构的 protoc 工具 -->
+    <Protobuf_GrpcServices>Server</Protobuf_GrpcServices>
+  </PropertyGroup>
+
   <ItemGroup>
     <Protobuf Include="..\Shared\Protos\greeter.proto" GrpcServices="Server" />
   </ItemGroup>

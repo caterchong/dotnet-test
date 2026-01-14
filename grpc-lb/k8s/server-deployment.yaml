@@ -38,21 +38,19 @@ spec:
             memory: "256Mi"
             cpu: "200m"
         readinessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - "nc -z localhost 50051 || exit 1"
+          tcpSocket:
+            port: 50051
           initialDelaySeconds: 5
           periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
         livenessProbe:
-          exec:
-            command:
-            - /bin/sh
-            - -c
-            - "nc -z localhost 50051 || exit 1"
+          tcpSocket:
+            port: 50051
           initialDelaySeconds: 10
           periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3
 
 ---
 apiVersion: v1

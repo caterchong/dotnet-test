@@ -8,14 +8,26 @@ echo "=== Building Docker Images ==="
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# 检测架构
+ARCH=$(uname -m)
+PLATFORM="linux/amd64"
+
+# 如果是 ARM64 (Apple Silicon)，使用 linux/amd64 平台构建以避免 protoc 工具问题
+if [ "$ARCH" = "arm64" ]; then
+    echo "Detected ARM64 architecture, using linux/amd64 platform for compatibility"
+    PLATFORM="linux/amd64"
+fi
+
 # 构建 Server 镜像
-echo "Building grpc-server image..."
+# 使用 DOCKER_BUILDKIT=1 以确保正确的平台处理
+echo "Building grpc-server image (platform: $PLATFORM)..."
 cd "$PROJECT_ROOT"
-docker build -t grpc-server:latest -f GrpcServer/Dockerfile .
+DOCKER_BUILDKIT=1 docker build --platform "$PLATFORM" -t grpc-server:latest -f GrpcServer/Dockerfile .
 
 # 构建 Client 镜像
-echo "Building grpc-client image..."
-docker build -t grpc-client:latest -f GrpcClient/Dockerfile .
+# 使用 DOCKER_BUILDKIT=1 以确保正确的平台处理
+echo "Building grpc-client image (platform: $PLATFORM)..."
+DOCKER_BUILDKIT=1 docker build --platform "$PLATFORM" -t grpc-client:latest -f GrpcClient/Dockerfile .
 
 # 加载镜像到 kind 集群
 if command -v kind &> /dev/null; then
