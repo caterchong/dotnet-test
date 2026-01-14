@@ -12,6 +12,7 @@ public class LoadBalancer : IDisposable
 {
     private readonly List<ServerEndpoint> _endpoints = new();
     private readonly ConcurrentDictionary<string, GrpcChannel> _channels = new();
+    private readonly ConcurrentDictionary<string, Greeter.GreeterClient> _clients = new(); // 缓存客户端实例
     private readonly Random _random = new();
     private readonly Timer? _healthCheckTimer;
     private readonly Timer? _dnsRefreshTimer;
@@ -91,6 +92,9 @@ public class LoadBalancer : IDisposable
                 {
                     Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] DNS: Endpoint removed: {endpoint.Address}");
                     _endpoints.Remove(endpoint);
+                    // 移除客户端缓存
+                    _clients.TryRemove(endpoint.Address, out _);
+                    // 移除并释放 channel
                     if (_channels.TryRemove(endpoint.Address, out var channel))
                     {
                         channel.Dispose();
@@ -161,8 +165,12 @@ public class LoadBalancer : IDisposable
             _currentIndex++;
         }
 
-        var channel = GetOrCreateChannel(endpoint.Address);
-        return new Greeter.GreeterClient(channel);
+        // 复用客户端实例（客户端是线程安全的，可以复用）
+        return _clients.GetOrAdd(endpoint.Address, addr =>
+        {
+            var channel = GetOrCreateChannel(addr);
+            return new Greeter.GreeterClient(channel);
+        });
     }
 
     private GrpcChannel GetOrCreateChannel(string address)
@@ -194,6 +202,9 @@ public class LoadBalancer : IDisposable
     {
         _healthCheckTimer?.Dispose();
         _dnsRefreshTimer?.Dispose();
+        
+        // 注意：不需要释放客户端，它们只是 channel 的轻量级包装
+        _clients.Clear();
         
         foreach (var channel in _channels.Values)
         {
