@@ -16,6 +16,8 @@ spec:
       labels:
         app: grpc-server
     spec:
+      # 设置终止宽限期为 30 秒，允许优雅关闭
+      terminationGracePeriodSeconds: 30
       containers:
       - name: grpc-server
         image: grpc-server:latest
@@ -38,6 +40,13 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - "sleep 10"
         readinessProbe:
           tcpSocket:
             port: 50051

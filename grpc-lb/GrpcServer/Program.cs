@@ -14,8 +14,8 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(port, listenOptions =>
     {
-        // 只支持 HTTP/2（gRPC 要求）
-        listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2;
+        // 同时支持 HTTP/1.1（用于健康检查）和 HTTP/2（用于 gRPC）
+        listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
     });
 });
 
@@ -27,6 +27,9 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<GreeterService>();
+
+// 添加 HTTP 健康检查端点（用于 Kubernetes 健康检查）
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
 Console.WriteLine($"gRPC Server starting on port {port}, hostname: {hostname}");
 Console.WriteLine($"Listening on http://0.0.0.0:{port}");
