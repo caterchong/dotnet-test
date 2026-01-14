@@ -6,7 +6,7 @@ namespace GrpcLoadBalancing.Client;
 class Program
 {
     private static readonly ConcurrentDictionary<int, int> ServerCallCounts = new();
-    private static LoadBalancer? _loadBalancer;
+    private static LoadBalancer _loadBalancer = null!; // 将在 Main 方法中初始化
 
     static async Task Main(string[] args)
     {
@@ -41,7 +41,7 @@ class Program
         await RunLoadBalancingTest(testDuration, requestInterval);
 
         // 清理
-        _loadBalancer?.Dispose();
+        _loadBalancer.Dispose();
     }
 
     static async Task RunLoadBalancingTest(int durationSeconds, int intervalMs)
@@ -62,7 +62,7 @@ class Program
                 // 每10秒显示一次端点状态
                 if (DateTime.Now - lastStatusTime > TimeSpan.FromSeconds(10))
                 {
-                    var endpoints = _loadBalancer!.GetEndpoints();
+                    var endpoints = _loadBalancer.GetEndpoints();
                     Console.WriteLine($"\n[{DateTime.Now:HH:mm:ss.fff}] Endpoint Status:");
                     foreach (var endpoint in endpoints)
                     {
@@ -75,7 +75,7 @@ class Program
 
                 try
                 {
-                    var client = _loadBalancer!.GetClient();
+                    var client = _loadBalancer.GetClient();
                     var request = new HelloRequest
                     {
                         Name = $"Client-{requestId}",
@@ -116,7 +116,7 @@ class Program
         }
 
         // 显示最终端点状态
-        var finalEndpoints = _loadBalancer!.GetEndpoints();
+        var finalEndpoints = _loadBalancer.GetEndpoints();
         Console.WriteLine("\nFinal endpoint status:");
         foreach (var endpoint in finalEndpoints)
         {

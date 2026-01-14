@@ -1,0 +1,9 @@
+测试dotnet环境下Grpc.Dotnet.Client在client loadbalance方面的表现
+
+- 启动3个grpc-dotnet服务，端口分别为50051, 50052, 50053
+- 启动一个dotnet客户端，连接到3个服务
+- 客户端使用Grpc.Dotnet.Client进行负载均衡
+- 使用dns resolver进行负载均衡， 新增加一个服务器， 测试client需要多久可以感知到
+- 删除一个服务实例后， 测试client需要多久可以感知到
+- 当一个服务实例宕机后，client如何处理，是主动摘除异常实例，还是等待dns通知后再摘除
+- 测试环境可以用本地kind集群模拟，服务实例扩缩容可以用deployment修改replica实现
