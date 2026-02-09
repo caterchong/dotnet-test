@@ -1,0 +1,4 @@
+测试dotnet语言通过throw返回和通过return返回的性能差异
+给出benchmark结果
+
+函数深度要有5层。
