@@ -1,0 +1,5 @@
+开发一个基于dotnet 10.0.101的服务器
+基于Microsoft.Extensions.Hosting, Kestrel,http1.1
+echo客户端上行的数据即可。
+
+然后写个压测工具做压力测试。
