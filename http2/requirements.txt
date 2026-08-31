@@ -1,0 +1,9 @@
+启动一个dotnet https server， 支持http1.1，http2
+
+启动dotnet客户端发请求去访问http server
+
+http client的设置如下
+client.DefaultRequestVersion = System.Net.HttpVersion.Version20;
+client.DefaultVersionPolicy = System.Net.Http.HttpVersionPolicy.RequestVersionOrLower;
+
+自己构造 HttpRequestMessage 再调用 SendAsync(request)看看用的http协议是1.1还是2
